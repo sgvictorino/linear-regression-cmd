@@ -17,6 +17,8 @@
 """
 
 from sklearn import linear_model
+from sklearn.metrics import mean_squared_error
+
 import numpy as np
 import pickle
 
@@ -31,7 +33,7 @@ class LinearRegression:
             new_model = linear_model.LinearRegression().fit(
                 np.array(input_data), np.array(output_data))
             pickle.dump(new_model, model_file)
-            #pickle.dump(112, model_file)
+            return dict(mse=mean_squared_error(output_data, new_model.predict(input_data)))
         except Exception as ex:
             ErrorHandler.command_failed(ex)
 
