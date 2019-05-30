@@ -17,10 +17,11 @@
 """
 
 from sklearn import linear_model
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 
 import numpy as np
 import pickle
+import json
 
 from error_handler import ErrorHandler
 
@@ -33,7 +34,7 @@ class LinearRegression:
             new_model = linear_model.LinearRegression().fit(
                 np.array(input_data), np.array(output_data))
             pickle.dump(new_model, model_file)
-            return dict(mse=mean_squared_error(output_data, new_model.predict(input_data)))
+            return json.dumps(dict(mse=mean_squared_error(output_data, new_model.predict(input_data)), r2=r2_score(output_data, new_model.predict(input_data))))
         except Exception as ex:
             ErrorHandler.command_failed(ex)
 
