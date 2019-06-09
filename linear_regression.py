@@ -17,11 +17,13 @@
 """
 
 from sklearn import linear_model
+from sklearn.model_selection import cross_validate, LeaveOneOut
 from sklearn.metrics import mean_squared_error, r2_score
 
 import numpy as np
 import pickle
 import json
+import math
 
 from error_handler import ErrorHandler
 
@@ -34,7 +36,28 @@ class LinearRegression:
             new_model = linear_model.LinearRegression().fit(
                 np.array(input_data), np.array(output_data))
             pickle.dump(new_model, model_file)
-            return json.dumps(dict(mse=mean_squared_error(output_data, new_model.predict(input_data)), r2=r2_score(output_data, new_model.predict(input_data))))
+
+            cvMetrics = ("explained_variance", "max_error", "neg_mean_absolute_error",
+                         "neg_mean_squared_error", "neg_median_absolute_error")
+
+            cvMetricScores = cross_validate(linear_model.LinearRegression(), np.array(input_data), np.array(
+                output_data), scoring=cvMetrics, cv=LeaveOneOut(), return_train_score=True)
+
+            # make a subset of the metric scores that excludes anything with NaNs in them
+            # this is a way to get around a "RuntimeError: dictionary changed size during iteration" exception
+            cvMetricScoresWithoutInvalidResults = dict(cvMetricScores)
+            for scoreNparrayKey in cvMetricScores:
+                # while we're at it, turn the numpy arrays into Python lists
+                cvMetricScores[scoreNparrayKey] = cvMetricScores[scoreNparrayKey].tolist(
+                )
+                if not math.isnan(cvMetricScores[scoreNparrayKey][0]):
+                    cvMetricScoresWithoutInvalidResults[scoreNparrayKey] = cvMetricScores[scoreNparrayKey]
+
+            # return both the model metrics and the cross-validation metrics using dict.update()
+            metrics = dict(mse=mean_squared_error(output_data, new_model.predict(
+                input_data)), r2=r2_score(output_data, new_model.predict(input_data)))
+            metrics.update(cvMetricScoresWithoutInvalidResults)
+            return metrics
         except Exception as ex:
             ErrorHandler.command_failed(ex)
 
