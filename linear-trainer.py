@@ -41,7 +41,7 @@ def help_screen():
 
     Examples:
         --predict '{"input_data": [[1, 2, 1]]}' -m my_model.pickle
-        --train '{"input_data": [[1, 1, 2]], "output_data": [4]}' -m my_model.pickle
+        --train '{"input_data": [[1, 1, 2]], "output_data": [4]}' -m my_model.pickle --cross-validation
         --train '{"input_data": [[1, 2, 3], [3, 2, 1]], "output_data": [1, 2]}' --predict '{"input_data": [[1, 2, 3]]}' -m my_model.pickle
     """)
     sys.exit(0)
@@ -54,7 +54,11 @@ try:
         if arg in ("--help", "-h") or len(sys.argv[1:]) == 0:
             help_screen()
         if next_data_train:
-            actions.append(("train", json.loads(arg)))
+            get_cross_validation_metrics = False
+            if "--cross-validation" in sys.argv[1:] or "-c" in sys.argv[1:]:
+                get_cross_validation_metrics = True
+            actions.append(("train", json.loads(
+                arg), get_cross_validation_metrics))
             next_data_train = False
         elif next_data_predict:
             actions.append(("predict", json.loads(arg), None))
@@ -69,6 +73,9 @@ try:
                 next_data_predict = True
             elif arg in ("--model", "-m"):
                 next_data_set_model_path = True
+            elif arg in ("--cross-validation", "-c"):
+                # do nothing; this is handled after data is passed following the --train flag
+                pass
             else:
                 sys.exit(Exception("Invalid argument '" + arg + "'!"))
     if model_path == None:
@@ -84,7 +91,7 @@ try:
     for action in actions:
         if action[0] == "train":
             response = LinearRegression.update_or_overwrite_linear_regression_model(
-                action[1]["input_data"], action[1]["output_data"], model_path)
+                action[1]["input_data"], action[1]["output_data"], action[2], model_path)
         elif action[0] == "predict":
             response = LinearRegression.perform_linear_regression_model_prediction(
                 action[1]["input_data"], model_path)

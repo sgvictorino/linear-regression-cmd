@@ -30,33 +30,35 @@ from error_handler import ErrorHandler
 
 class LinearRegression:
     @staticmethod
-    def update_or_overwrite_linear_regression_model(input_data: list, output_data: list, model_file_path: str):
+    def update_or_overwrite_linear_regression_model(input_data: list, output_data: list, get_cross_validation_metrics: bool, model_file_path: str):
         try:
             model_file = open(model_file_path, "wb")
             new_model = linear_model.LinearRegression().fit(
                 np.array(input_data), np.array(output_data))
             pickle.dump(new_model, model_file)
 
-            cvMetrics = ("explained_variance", "max_error", "neg_mean_absolute_error",
-                         "neg_mean_squared_error", "neg_median_absolute_error")
-
-            cvMetricScores = cross_validate(linear_model.LinearRegression(), np.array(input_data), np.array(
-                output_data), scoring=cvMetrics, cv=LeaveOneOut(), return_train_score=True)
-
-            # make a subset of the metric scores that excludes anything with NaNs in them
-            # this is a way to get around a "RuntimeError: dictionary changed size during iteration" exception
-            cvMetricScoresWithoutInvalidResults = dict(cvMetricScores)
-            for scoreNparrayKey in cvMetricScores:
-                # while we're at it, turn the numpy arrays into Python lists
-                cvMetricScores[scoreNparrayKey] = cvMetricScores[scoreNparrayKey].tolist(
-                )
-                if not math.isnan(cvMetricScores[scoreNparrayKey][0]):
-                    cvMetricScoresWithoutInvalidResults[scoreNparrayKey] = cvMetricScores[scoreNparrayKey]
-
-            # return both the model metrics and the cross-validation metrics using dict.update()
+            # return the model metrics
             metrics = dict(mse=mean_squared_error(output_data, new_model.predict(
                 input_data)), r2=r2_score(output_data, new_model.predict(input_data)))
-            metrics.update(cvMetricScoresWithoutInvalidResults)
+            # and return the cross-validation metrics using dict.update(), if activated
+            if get_cross_validation_metrics:
+                cvMetrics = ("explained_variance", "max_error", "neg_mean_absolute_error",
+                             "neg_mean_squared_error", "neg_median_absolute_error")
+
+                cvMetricScores = cross_validate(linear_model.LinearRegression(), np.array(input_data), np.array(
+                    output_data), scoring=cvMetrics, cv=LeaveOneOut(), return_train_score=True)
+
+                # make a subset of the metric scores that excludes anything with NaNs in them
+                # this is a way to get around a "RuntimeError: dictionary changed size during iteration" exception
+                cvMetricScoresWithoutInvalidResults = dict(cvMetricScores)
+                for scoreNparrayKey in cvMetricScores:
+                    # while we're at it, turn the numpy arrays into Python lists
+                    cvMetricScores[scoreNparrayKey] = cvMetricScores[scoreNparrayKey].tolist(
+                    )
+                    if not math.isnan(cvMetricScores[scoreNparrayKey][0]):
+                        cvMetricScoresWithoutInvalidResults[scoreNparrayKey] = cvMetricScores[scoreNparrayKey]
+
+                metrics.update(cvMetricScoresWithoutInvalidResults)
             return metrics
         except Exception as ex:
             ErrorHandler.command_failed(ex)
