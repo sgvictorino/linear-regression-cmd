@@ -59,7 +59,7 @@ class LinearRegression:
                         cvMetricScoresWithoutInvalidResults[scoreNparrayKey] = cvMetricScores[scoreNparrayKey]
 
                 metrics.update(cvMetricScoresWithoutInvalidResults)
-            return metrics
+            return json.dumps(metrics)
         except Exception as ex:
             ErrorHandler.command_failed(ex)
 
