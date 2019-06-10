@@ -59,6 +59,13 @@ class LinearRegression:
                         cvMetricScoresWithoutInvalidResults[scoreNparrayKey] = cvMetricScores[scoreNparrayKey]
 
                 metrics.update(cvMetricScoresWithoutInvalidResults)
+            
+            # transform NaN values into null
+            for metricKey in metrics:
+                if math.isnan(metrics[metricKey]):
+                    # json.dumps replaces None with null, not the string "null"
+                    metrics[metricKey] = None
+
             return json.dumps(metrics)
         except Exception as ex:
             ErrorHandler.command_failed(ex)
