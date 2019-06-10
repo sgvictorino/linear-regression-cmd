@@ -41,7 +41,7 @@ class LinearRegression:
             metrics = dict(mse=mean_squared_error(output_data, new_model.predict(
                 input_data)), r2=r2_score(output_data, new_model.predict(input_data)))
             # and return the cross-validation metrics using dict.update(), if activated
-            if get_cross_validation_metrics:
+            if get_cross_validation_metrics and len(input_data) > 1:
                 cvMetrics = ("explained_variance", "max_error", "neg_mean_absolute_error",
                              "neg_mean_squared_error", "neg_median_absolute_error")
 
@@ -59,14 +59,17 @@ class LinearRegression:
                         cvMetricScoresWithoutInvalidResults[scoreNparrayKey] = cvMetricScores[scoreNparrayKey]
 
                 metrics.update(cvMetricScoresWithoutInvalidResults)
-            
-            # transform NaN values into null
-            for metricKey in metrics:
-                if math.isnan(metrics[metricKey]):
-                    # json.dumps replaces None with null, not the string "null"
-                    metrics[metricKey] = None
 
-            return json.dumps(metrics)
+            metricsWithoutNaN = dict(metrics)
+            # transform NaN values into undefined
+            for metricKey in metrics:
+                if type(metrics[metricKey]) is not list and math.isnan(metrics[metricKey]):
+                    metricsWithoutNaN.pop(metricKey)
+
+            if len(metricsWithoutNaN) == 1 and metricsWithoutNaN["mse"] == 0:
+                return "{}"
+
+            return json.dumps(metricsWithoutNaN)
         except Exception as ex:
             ErrorHandler.command_failed(ex)
 
