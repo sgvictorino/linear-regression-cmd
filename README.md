@@ -4,8 +4,8 @@ Train linear regression models in your terminal!
 
 ## Quickstart
 ```
-git clone https://github.com/sgvictorino/linear-trainer-cmd.git
-cd linear-trainer-cmd
+git clone https://github.com/sgvictorino/linear-regression-cmd.git
+cd linear-regression-cmd
 python3 linear-trainer.py --help
 ```
 ## License
