@@ -10,6 +10,6 @@ python3 linear-trainer.py --help
 ```
 ## License
 
-This program is licensed under the GNU Affero General Public License to ensure that any improvements are redistributed to the open source software community.
+This program is licensed under the MIT license.
 
 The full terms are attached in the `LICENSE` file.
