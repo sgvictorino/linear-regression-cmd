@@ -4,14 +4,21 @@ from argparse import ArgumentParser
 import sys
 import json
 import os
+import ast
 
-from linear_regression import LinearRegression
+from lib.utils import *
+
+from regression_helpers import RegressionHelpers
+from regressor_types import Regressor
 
 actions = []
 next_data_train = False
 next_data_predict = False
 next_data_set_model_path = False
+next_data_set_train_size = False
 
+regressor = None
+train_size = None
 model_path = None
 
 
@@ -39,8 +46,13 @@ try:
             get_cross_validation_metrics = False
             if "--cross-validation" in sys.argv[1:] or "-c" in sys.argv[1:]:
                 get_cross_validation_metrics = True
+
+            regressor = Regressor.LINEAR
+            if "--gradient-boosting-regression" in sys.argv[1:] or "-gb" in sys.argv[1:]:
+                regressor = Regressor.GRADIENT_BOOSTER
+
             actions.append(("train", json.loads(
-                arg), get_cross_validation_metrics))
+                arg), regressor, get_cross_validation_metrics, train_size))
             next_data_train = False
         elif next_data_predict:
             actions.append(("predict", json.loads(arg), None))
@@ -48,6 +60,9 @@ try:
         elif next_data_set_model_path:
             model_path = arg
             next_data_set_model_path = False
+        elif next_data_set_train_size:
+            train_size = arg
+            next_data_set_train_size = False
         else:
             if arg in ("--train", "-t"):
                 next_data_train = True
@@ -55,8 +70,13 @@ try:
                 next_data_predict = True
             elif arg in ("--model", "-m"):
                 next_data_set_model_path = True
+            elif arg in ("--train-size"):
+                next_data_set_train_size = True
             elif arg in ("--cross-validation", "-c"):
                 # do nothing; this is handled after data is passed following the --train flag
+                pass
+            elif arg in ("--gradient-boosting-regression", "-gb"):
+                # do nothing; this is also handled after data is passed following the --train flag
                 pass
             else:
                 sys.exit(Exception("Invalid argument '" + arg + "'!"))
@@ -72,10 +92,10 @@ try:
         help_screen()
     for action in actions:
         if action[0] == "train":
-            response = LinearRegression.update_or_overwrite_linear_regression_model(
-                action[1]["input_data"], action[1]["output_data"], action[2], model_path)
+            response = RegressionHelpers.update_or_overwrite_regression_model(
+                action[1]["input_data"], action[1]["output_data"], action[2], action[3], model_path, get_first_not_none_item_in_sequence([call_function_with_args_if_value_not_none(ast.literal_eval, action[4], action[4]), call_function_with_args_if_value_not_none(ast.literal_eval, train_size, train_size), 0.99]))
         elif action[0] == "predict":
-            response = LinearRegression.perform_linear_regression_model_prediction(
+            response = RegressionHelpers.perform_regression_model_prediction(
                 action[1]["input_data"], model_path)
         if response:
             print(response)
