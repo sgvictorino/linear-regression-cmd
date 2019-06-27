@@ -6,7 +6,7 @@ import json
 import os
 import ast
 
-from lib.utils import *
+from utils import *
 
 from regression_helpers import RegressionHelpers
 from regressor_types import Regressor
