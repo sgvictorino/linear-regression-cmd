@@ -21,6 +21,9 @@ class RegressionHelpers:
             new_model = regressor().fit(
                 np.array(input_data), np.array(output_data))
             pickle.dump(new_model, model_file)
+            if len(input_data) == 1:
+                return "{}"
+
             X_train, X_test, y_train, y_test = train_test_split(
                 input_data, output_data, train_size=train_size if train_size * len(output_data) > 2 else 0.99, random_state=42)
 
