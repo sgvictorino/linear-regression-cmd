@@ -5,6 +5,7 @@ import sys
 import json
 import os
 import ast
+import traceback
 
 from utils import *
 
@@ -100,4 +101,4 @@ try:
         if response:
             print(response)
 except Exception as ex:
-    sys.exit(Exception(ex))
+    sys.exit(traceback.format_exc())
